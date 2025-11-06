@@ -3,19 +3,18 @@
 Scoops & Smiles – Inventory & Income Statement App
 
 • Python 3.x, Tkinter (built‑in), sqlite3 (built‑in)
-• No terminal interaction required; all actions via GUI
 • Data is persisted to a local SQLite file (scoops.db) and CSV import/export is supported
 • GAAP‑style Monthly Income Statement per location and company‑wide
 
-Folder layout suggestion (create alongside this file):
+Folder layout (create alongside this file):
 .
 ├── DataScoop.py            # this file
 ├── scoops.db               # auto‑created on first run
-├── data/                   # CSV import/export directory (auto‑created)
+├── data/                   # CSV import/export directory (auto‑created) - populated when you export data from the app
 │   ├── purchases.csv
 │   ├── sales.csv
 │   └── locations.csv
-└── README.md               # your manual (write separately)
+└── README.md              
 
 Notes
 -----
@@ -29,7 +28,7 @@ Notes
 Team Config
 -----------
 - The app stores the DB path in `config.json` (created on first run). By default, it points to `scoops.db` in the project folder.
-- Everyone on the team should keep the repo structure the same so paths are consistent.
+- Everyone should keep the repo structure the same so paths are consistent.
 
 """
 import csv
@@ -71,13 +70,12 @@ FIXED_EXPENSES = {
     "equipment_lease": 2000.0,
 }
 
-# Master data seeded at first run
 FLAVORS = [
-    ("Vanilla", 1.80),
-    ("Chocolate", 1.80),
-    ("Cookies & Cream", 1.90),
-    ("Neapolitan", 1.85),
-    ("Cookie Dough", 1.95),
+    ("Vanilla", 2.0),
+    ("Chocolate", 2.0),
+    ("Neapolitan", 2.5),
+    ("Cookies & Cream", 3.0),
+    ("Cookie Dough", 3.0),
 ]
 
 CONTAINERS = [
@@ -86,7 +84,7 @@ CONTAINERS = [
     ("Dish w/ Spoon", 4.50, 100),
 ]
 
-# ---------- Setup / DB ----------
+################## Setup / DB ##################
 
 def ensure_dirs():
     DATA_DIR.mkdir(exist_ok=True)
@@ -193,7 +191,7 @@ def init_db():
             )
         con.commit()
 
-# ---------- Data helpers ----------
+################### Data helpers ###################
 
 def list_locations(con):
     cur = con.cursor()
@@ -404,7 +402,7 @@ def generate_flavor_sales_report(year: int, month: int):
             })
         return out
 
-# ---------- GUI ----------
+################### GUI ###################
 class RoleDialog(tk.Toplevel):
     def __init__(self, master):
         super().__init__(master)
@@ -448,7 +446,7 @@ class App(tk.Tk):
         self.cart = []  # list of dict lines for customer checkout
         self._select_role_and_build()
 
-    # ----- Role selection -----
+    # Role selection 
     def _select_role_and_build(self):
         dlg = RoleDialog(self)
         self.wait_window(dlg)
@@ -458,7 +456,7 @@ class App(tk.Tk):
         self.role = role
         self._build_ui_for_role()
 
-    # ----- Build UI according to role -----
+    # Build UI according to role 
     def _build_ui_for_role(self):
         self.nb = ttk.Notebook(self)
         self.nb.pack(fill=tk.BOTH, expand=True)
@@ -487,7 +485,7 @@ class App(tk.Tk):
             self._build_purchase_tab_customer()
             self._build_checkout_tab()
 
-    # ----- Locations (manager) -----
+    # Locations (manager)
     def _build_locations_tab(self):
         frm = self.tab_locations
         ttk.Label(frm, text="Add New Location").grid(row=0, column=0, padx=10, pady=10, sticky="w")
@@ -518,7 +516,7 @@ class App(tk.Tk):
             for _id, name in list_locations(con):
                 self.locs_list.insert(tk.END, f"{_id} – {name}")
 
-    # ----- Inventory Restock (manager) -----
+    # Inventory Restock (manager)
     def _build_restock_tab(self):
         frm = self.tab_restock
         with get_conn() as con:
@@ -549,7 +547,7 @@ class App(tk.Tk):
         record_purchase(loc_id, flavor_id, qty)
         messagebox.showinfo("Saved", "Inventory restocked.")
 
-    # ----- Import / Export (manager) -----
+    # Import / Export (manager)
     def _build_import_export_tab(self):
         frm = self.tab_import_export
         ttk.Label(frm, text="CSV Import/Export").grid(row=0, column=0, padx=10, pady=10, sticky="w")
@@ -645,7 +643,7 @@ class App(tk.Tk):
                     print("Sale import error:", e)
         messagebox.showinfo("Import", f"Imported {imported} sale rows.")
 
-    # ----- Reports (manager) -----
+    # Reports (manager) 
     def _build_reports_tab(self):
         frm = self.tab_reports
         ttk.Label(frm, text="Reports – Monthly").grid(row=0, column=0, padx=10, pady=10, sticky="w")
@@ -712,7 +710,7 @@ class App(tk.Tk):
             txt = "".join(lines)
         self.report_text.delete("1.0", tk.END); self.report_text.insert(tk.END, txt)
 
-    # ----- Purchase (customer) -----
+    # Purchase (customer)
     def _build_purchase_tab_customer(self):
         frm = self.tab_purchase
         with get_conn() as con:
@@ -770,7 +768,7 @@ class App(tk.Tk):
         messagebox.showinfo("Cart", "Item added to cart.")
         self.refresh_checkout()
 
-    # ----- Checkout (customer) -----
+    # Checkout (customer)
     def _build_checkout_tab(self):
         frm = self.tab_checkout
         ttk.Label(frm, text="Your Cart").grid(row=0, column=0, padx=10, pady=10, sticky="w")
