@@ -401,6 +401,32 @@ def generate_flavor_sales_report(year: int, month: int):
                 "Containers (approx)": round(oz / OZ_PER_CONTAINER, 2),
             })
         return out
+def generate_inventory_levels():
+    """Return inventory on hand per location & flavor with ounce and container approximations."""
+    with get_conn() as con:
+        cur = con.cursor()
+        cur.execute("SELECT id, name FROM locations")
+        loc_names = {lid: lname for lid, lname in cur.fetchall()}
+        cur.execute("SELECT id, name FROM flavors")
+        flv_names = {fid: fname for fid, fname in cur.fetchall()}
+        cur.execute(
+            """
+            SELECT location_id, flavor_id, ounces_on_hand, avg_cost_per_oz
+            FROM inventory_state
+            ORDER BY location_id, flavor_id
+            """
+        )
+        rows = cur.fetchall()
+    out = []
+    for loc_id, flavor_id, ounces_on_hand, avg_cost_per_oz in rows:
+        out.append({
+            "Location": loc_names.get(loc_id, f"Loc {loc_id}"),
+            "Flavor": flv_names.get(flavor_id, f"Flavor {flavor_id}"),
+            "Ounces on Hand": round(float(ounces_on_hand), 2),
+            "Containers (approx)": round(float(ounces_on_hand) / OZ_PER_CONTAINER, 2),
+            "Avg Cost / oz": round(float(avg_cost_per_oz), 4),
+        })
+    return out
 
 ################### GUI ###################
 class RoleDialog(tk.Toplevel):
@@ -656,6 +682,7 @@ class App(tk.Tk):
         ttk.Entry(frm, textvariable=self.rep_month, width=4).grid(row=1, column=3, padx=5, pady=5, sticky="w")
         btns = ttk.Frame(frm); btns.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="w")
         ttk.Button(btns, text="Income Statement", command=self.show_income_statement).grid(row=0, column=0, padx=5)
+        ttk.Button(btns, text="Inventory Levels", command=self.show_inventory_levels).grid(row=0, column=2, padx=5)
         ttk.Button(btns, text="Flavor Sales Report", command=self.show_flavor_sales).grid(row=0, column=1, padx=5)
         self.report_text = tk.Text(frm, wrap="word", height=25)
         self.report_text.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
@@ -709,6 +736,22 @@ class App(tk.Tk):
                 lines.append(f"{r['Location']}, {r['Flavor']}, {r['Ounces Sold']}, {r['Containers (approx)']}")
             txt = "".join(lines)
         self.report_text.delete("1.0", tk.END); self.report_text.insert(tk.END, txt)
+    def show_inventory_levels(self):
+        try:
+            rows = generate_inventory_levels()
+        except Exception as e:
+            messagebox.showerror("Report", str(e)); return
+        if not rows:
+            txt = "No inventory records found."
+        else:
+            header = ["Location", "Flavor", "Ounces on Hand", "Containers (approx)", "Avg Cost / oz"]
+            lines = [", ".join(header)]
+            for r in rows:
+                lines.append("\n")
+                lines.append(f"{r['Location']}, {r['Flavor']}, {r['Ounces on Hand']}, {r['Containers (approx)']}, ${r['Avg Cost / oz']}")
+            txt = "".join(lines)
+        self.report_text.delete("1.0", tk.END); self.report_text.insert(tk.END, txt)
+
 
     # Purchase (customer)
     def _build_purchase_tab_customer(self):
