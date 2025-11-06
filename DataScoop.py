@@ -704,9 +704,10 @@ class App(tk.Tk):
         if not rows:
             txt = f"No sales for {y}-{m:02d}."
         else:
-            header = ["Location", "Flavor", "Ounces Sold", "Containers (approx)"]
+            header = ["Location", "Flavor", "Ounces Sold", "Containers (approx) "]
             lines = [", ".join(header)]
             for r in rows:
+                lines.append("\n")
                 lines.append(f"{r['Location']}, {r['Flavor']}, {r['Ounces Sold']}, {r['Containers (approx)']}")
             txt = "".join(lines)
         self.report_text.delete("1.0", tk.END); self.report_text.insert(tk.END, txt)
