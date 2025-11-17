@@ -30,6 +30,11 @@ Team Config
 - The app stores the DB path in `config.json` (created on first run). By default, it points to `scoops.db` in the project folder.
 - Everyone should keep the repo structure the same so paths are consistent.
 
+Sign In Function for managers:
+-----------------
+Username: manager
+Password: password
+
 """
 import csv
 import json
@@ -736,6 +741,7 @@ class App(tk.Tk):
                 lines.append(f"{r['Location']}, {r['Flavor']}, {r['Ounces Sold']}, {r['Containers (approx)']}")
             txt = "".join(lines)
         self.report_text.delete("1.0", tk.END); self.report_text.insert(tk.END, txt)
+    
     def show_inventory_levels(self):
         try:
             rows = generate_inventory_levels()
