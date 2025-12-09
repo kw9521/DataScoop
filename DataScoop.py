@@ -503,8 +503,8 @@ class App(tk.Tk):
             self.nb.add(self.tab_import_export, text="Import/Export")
             self.nb.add(self.tab_reports, text="Reports")
 
-            self._build_locations_tab()
             self._build_restock_tab()
+            self._build_locations_tab()
             self._build_import_export_tab()
             self._build_reports_tab()
         else:
@@ -541,12 +541,6 @@ class App(tk.Tk):
         else:
             messagebox.showerror("Error", "Location already exists or failed to add.")
 
-    def refresh_locations_list(self):
-        self.locs_list.delete(0, tk.END)
-        with get_conn() as con:
-            for _id, name in list_locations(con):
-                self.locs_list.insert(tk.END, f"{_id} – {name}")
-
     # Inventory Restock (manager)
     def _build_restock_tab(self):
         frm = self.tab_restock
@@ -555,15 +549,27 @@ class App(tk.Tk):
             self.flavor_choices_mgr = list_flavors(con)
         ttk.Label(frm, text="Record Inventory Restock").grid(row=0, column=0, padx=10, pady=10, sticky="w")
         ttk.Label(frm, text="Location").grid(row=1, column=0, padx=10, pady=5, sticky="e")
-        self.restock_loc = ttk.Combobox(frm, values=[f"{i}: {n}" for i, n in self.loc_choices_mgr], state="readonly", width=30)
+        self.restock_loc = ttk.Combobox(frm, values=[f"{i}: {n}" for i, n in self.loc_choices_mgr],
+                                        state="readonly", width=30)
         self.restock_loc.grid(row=1, column=1, padx=10, pady=5)
         ttk.Label(frm, text="Flavor").grid(row=2, column=0, padx=10, pady=5, sticky="e")
-        self.restock_flavor = ttk.Combobox(frm, values=[f"{i}: {n}" for i, n in self.flavor_choices_mgr], state="readonly", width=30)
+        self.restock_flavor = ttk.Combobox(frm, values=[f"{i}: {n}" for i, n in self.flavor_choices_mgr],
+                                           state="readonly", width=30)
         self.restock_flavor.grid(row=2, column=1, padx=10, pady=5)
         ttk.Label(frm, text="# Containers (5 gal each)").grid(row=3, column=0, padx=10, pady=5, sticky="e")
         self.restock_qty_var = tk.IntVar(value=1)
-        ttk.Entry(frm, textvariable=self.restock_qty_var, width=10).grid(row=3, column=1, padx=10, pady=5, sticky="w")
-        ttk.Button(frm, text="Save Restock", command=self.save_restock_cb).grid(row=4, column=1, padx=10, pady=10, sticky="w")
+        ttk.Entry(frm, textvariable=self.restock_qty_var, width=10).grid(row=3, column=1, padx=10, pady=5,
+                                                                         sticky="w")
+        ttk.Button(frm, text="Save Restock", command=self.save_restock_cb).grid(row=4, column=1, padx=10, pady=10,
+                                                                                sticky="w")
+
+    def refresh_locations_list(self):
+        self.locs_list.delete(0, tk.END)
+        self.restock_loc.delete(0, tk.END)
+        with get_conn() as con:
+            for _id, name in list_locations(con):
+                self.locs_list.insert(tk.END, f"{_id} – {name}")
+                self.restock_loc.insert(tk.END, f"{_id} – {name}")
 
     def save_restock_cb(self):
         if not self.restock_loc.get() or not self.restock_flavor.get():
@@ -907,7 +913,6 @@ class App(tk.Tk):
         self.cart.clear()
         self.refresh_checkout()
         messagebox.showinfo("Checkout", "Thank you! Your order has been processed.")
-
 
 def main():
     ensure_dirs()
