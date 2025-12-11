@@ -468,6 +468,44 @@ class RoleDialog(tk.Toplevel):
         else:
             messagebox.showerror("Login failed", "Invalid credentials.")
 
+class LoginFrame(ttk.Frame):
+    def __init__(self, master, login_callback):
+        super().__init__(master)
+        self.login_callback = login_callback
+
+        ttk.Label(self, text="Scoops & Smiles Login", font=("Arial", 18, "bold")).grid(
+            row=0, column=0, columnspan=2, pady=25
+        )
+
+        ttk.Label(self, text="Username:").grid(row=1, column=0, pady=10, padx=10, sticky="e")
+        self.user_entry = ttk.Entry(self, width=30)
+        self.user_entry.grid(row=1, column=1, pady=10, padx=10)
+
+        ttk.Label(self, text="Password:").grid(row=2, column=0, pady=10, padx=10, sticky="e")
+        self.pwd_entry = ttk.Entry(self, width=30, show="*")
+        self.pwd_entry.grid(row=2, column=1, pady=10, padx=10)
+
+        self.login_btn = ttk.Button(self, text="Login (Manager)", command=self.try_login)
+        self.login_btn.grid(row=3, column=0, columnspan=2, pady=15)
+
+        ttk.Label(self, text="— OR —").grid(row=4, column=0, columnspan=2, pady=5)
+
+        self.customer_btn = ttk.Button(
+            self,
+            text="Continue as Customer",
+            command=lambda: self.login_callback("customer")
+        )
+        self.customer_btn.grid(row=5, column=0, columnspan=2, pady=10)
+
+    def try_login(self):
+        user = self.user_entry.get().strip()
+        pwd = self.pwd_entry.get().strip()
+        if user == "manager" and pwd == "password":
+            self.login_callback("manager")
+        else:
+            messagebox.showe
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -477,15 +515,26 @@ class App(tk.Tk):
         self.cart = []  # list of dict lines for customer checkout
         self._select_role_and_build()
 
-    # Role selection 
     def _select_role_and_build(self):
-        dlg = RoleDialog(self)
-        self.wait_window(dlg)
-        role = dlg.role
-        if role is None:
-            self.destroy(); return
+        """Show the new full login screen."""
+        self.login_frame = LoginFrame(self, self._finish_login)
+        self.login_frame.pack(fill="both", expand=True)
+
+    def _finish_login(self, role):
+        """Callback when login selection is completed."""
         self.role = role
+        self.login_frame.destroy()
         self._build_ui_for_role()
+
+        # Add logout button in top-right
+        logout_btn = ttk.Button(self, text="Logout", command=self.logout)
+        logout_btn.pack(anchor="ne", padx=10, pady=5)
+
+    def logout(self):
+        """Clear UI and return to login screen."""
+        for widget in self.winfo_children():
+            widget.destroy()
+        self._select_role_and_build()
 
     # Build UI according to role 
     def _build_ui_for_role(self):
